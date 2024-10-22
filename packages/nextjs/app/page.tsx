@@ -1,71 +1,167 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import type { NextPage } from "next";
-import { useAccount } from "wagmi";
-import { BugAntIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { Address } from "~~/components/scaffold-eth";
+import { useScaffoldReadContract } from "~~/hooks/scaffold-eth/useScaffoldReadContract";
+import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth/useScaffoldWriteContract";
+
+interface NFT {
+  name: string;
+  description: string;
+  imageUrl: string;
+  owner: string;
+}
+
+const isValidUrl = (url: string) => {
+  try {
+    new URL(url);
+    return true;
+  } catch (_) {
+    return false;
+  }
+};
+
+const compressAddress = (address: string) => {
+  if (!address) return "";
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
+
+const fallbackImageUrl = "/images/Image-not-found.png";
 
 const Home: NextPage = () => {
-  const { address: connectedAddress } = useAccount();
+  const { writeContractAsync } = useScaffoldWriteContract("MyNFT");
+  const [recipientNftAddress, setRecipientNftAddress] = useState("");
+  const [nftName, setNftName] = useState("");
+  const [nftDescription, setNftDescription] = useState("");
+  const [nftImageUrl, setNftImageUrl] = useState("");
+  const [nfts, setNfts] = useState<NFT[]>([]);
 
-  return (
-    <>
-      <div className="flex items-center flex-col flex-grow pt-10">
-        <div className="px-5">
-          <h1 className="text-center">
-            <span className="block text-2xl mb-2">Welcome to</span>
-            <span className="block text-4xl font-bold">Scaffold-ETH 2</span>
-          </h1>
-          <div className="flex justify-center items-center space-x-2 flex-col sm:flex-row">
-            <p className="my-2 font-medium">Connected Address:</p>
-            <Address address={connectedAddress} />
+  const {
+    data: allTokensData,
+    error,
+    refetch: refetchAllTokens,
+  } = useScaffoldReadContract({
+    contractName: "MyNFT",
+    functionName: "getAllTokens",
+  });
+
+  useEffect(() => {
+    if (allTokensData) {
+      setNfts([...allTokensData]);
+    }
+  }, [allTokensData]);
+
+  const renderedNfts = nfts.map((nft, index) => {
+    const handleError = () => {
+      setNftImageUrl(fallbackImageUrl);
+    };
+
+    return (
+      <div className="card bg-base-100 shadow-md shadow-secondary flex flex-grow max-w-xs" key={index}>
+        <figure className="mt-8">
+          <Image
+            src={isValidUrl(nft.imageUrl) ? nft.imageUrl : fallbackImageUrl}
+            alt={nft.name}
+            width={200}
+            height={200}
+            onError={handleError}
+          />
+        </figure>
+        <div className="card-body">
+          <h2 className="card-title font-bold text-lg justify-center">NFT {index + 1}</h2>
+          <div className="flex flex-grow items-start space-x-2 -mt-4">
+            <p className="text-lg">
+              <span className="font-bold">Name:</span> {nft.name}
+            </p>
           </div>
-
-          <p className="text-center text-lg">
-            Get started by editing{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/nextjs/app/page.tsx
-            </code>
-          </p>
-          <p className="text-center text-lg">
-            Edit your smart contract{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              YourContract.sol
-            </code>{" "}
-            in{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/hardhat/contracts
-            </code>
-          </p>
-        </div>
-
-        <div className="flex-grow bg-base-300 w-full mt-16 px-8 py-12">
-          <div className="flex justify-center items-center gap-12 flex-col sm:flex-row">
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <BugAntIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Tinker with your smart contract using the{" "}
-                <Link href="/debug" passHref className="link">
-                  Debug Contracts
-                </Link>{" "}
-                tab.
-              </p>
-            </div>
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <MagnifyingGlassIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Explore your local transactions with the{" "}
-                <Link href="/blockexplorer" passHref className="link">
-                  Block Explorer
-                </Link>{" "}
-                tab.
-              </p>
-            </div>
+          <div className="flex flex-grow items-start space-x-2 -mt-6">
+            <p className="text-lg">
+              <span className="font-bold">Description:</span> {nft.description}
+            </p>
+          </div>
+          <div className="flex flex-grow items-start space-x-2 -mt-6">
+            <p className="text-lg">
+              <span className="font-bold">Owner:</span> {compressAddress(nft.owner)}
+            </p>
           </div>
         </div>
       </div>
-    </>
+    );
+  });
+
+  const handleMint = async () => {
+    let tx: `0x${string}` | undefined;
+    try {
+      tx = await writeContractAsync({
+        functionName: "safeMint",
+        args: [recipientNftAddress, nftName, nftDescription, nftImageUrl],
+      });
+      console.log("Transaction successful: ", tx);
+      refetchAllTokens();
+    } catch (error) {
+      console.error("Transaction failed:", error);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex justify-center mt-4">
+        <div className="card bg-base-100 shadow-md shadow-secondary p-4 w-full max-w-xl">
+          <h1 className="font-bold text-2xl flex flex-col items-center mb-4">Mint New NFT</h1>
+          <label className="input input-bordered flex items-center gap-2 mx-2 mb-4">
+            Recipient Address
+            <input
+              type="text"
+              className="grow"
+              placeholder="0x1234...abcd"
+              value={recipientNftAddress}
+              onChange={e => setRecipientNftAddress(e.target.value)}
+            />
+          </label>
+          <label className="input input-bordered flex items-center gap-2 mx-2 mb-4">
+            Name
+            <input
+              type="text"
+              className="grow"
+              placeholder="Your Name"
+              value={nftName}
+              onChange={e => setNftName(e.target.value)}
+            />
+          </label>
+          <label className="input input-bordered flex items-center gap-2 mx-2 mb-4">
+            Description
+            <input
+              type="text"
+              className="grow"
+              placeholder="Your Description"
+              value={nftDescription}
+              onChange={e => setNftDescription(e.target.value)}
+            />
+          </label>
+          <label className="input input-bordered flex items-center gap-2 mx-2 mb-4">
+            Image URL
+            <input
+              type="text"
+              className="grow"
+              placeholder="Your Image URL"
+              value={nftImageUrl}
+              onChange={e => setNftImageUrl(e.target.value)}
+            />
+          </label>
+          <div className="flex justify-center">
+            <button className="btn btn-success btn-md" onClick={() => handleMint()}>
+              Mint NFT
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-center mt-4">
+        <h1 className="font-bold text-3xl flex flex-col items-center mb-8">NFT Collection</h1>
+      </div>
+      <div className="flex justify-center  gap-4">{renderedNfts}</div>
+      {error && <div className="text-red-500 text-xs text-center mt-1">{error.message}</div>}
+    </div>
   );
 };
 
