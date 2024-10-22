@@ -107,7 +107,13 @@ const Home: NextPage = () => {
   return (
     <div>
       <div className="flex justify-center mt-4">
-        <div className="card bg-base-100 shadow-md shadow-secondary p-4 w-full max-w-xl">
+        <form
+          className="card bg-base-100 shadow-md shadow-secondary p-4 w-full max-w-xl"
+          onSubmit={e => {
+            e.preventDefault();
+            handleMint();
+          }}
+        >
           <h1 className="font-bold text-2xl flex flex-col items-center mb-4">Mint New NFT</h1>
           <label className="input input-bordered flex items-center gap-2 mx-2 mb-4">
             Recipient Address
@@ -117,6 +123,7 @@ const Home: NextPage = () => {
               placeholder="0x1234...abcd"
               value={recipientNftAddress}
               onChange={e => setRecipientNftAddress(e.target.value)}
+              required={true}
             />
           </label>
           <label className="input input-bordered flex items-center gap-2 mx-2 mb-4">
@@ -127,6 +134,7 @@ const Home: NextPage = () => {
               placeholder="Your Name"
               value={nftName}
               onChange={e => setNftName(e.target.value)}
+              required={true}
             />
           </label>
           <label className="input input-bordered flex items-center gap-2 mx-2 mb-4">
@@ -150,11 +158,9 @@ const Home: NextPage = () => {
             />
           </label>
           <div className="flex justify-center">
-            <button className="btn btn-success btn-md" onClick={() => handleMint()}>
-              Mint NFT
-            </button>
+            <button className="btn btn-success btn-md">Mint NFT</button>
           </div>
-        </div>
+        </form>
       </div>
       <div className="flex justify-center mt-4">
         <h1 className="font-bold text-3xl flex flex-col items-center mb-8">NFT Collection</h1>
