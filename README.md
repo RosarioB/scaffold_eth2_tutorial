@@ -1,3 +1,7 @@
+# scaffold_eth2_tutorial application
+
+![alt text](https://github.com/RosarioB/scaffold_eth2_tutorial/blob/main/github_images/scaffold_eth2_tutorial.gif?raw=true)
+
 # 🏗 Scaffold-ETH 2
 
 <h4 align="center">
