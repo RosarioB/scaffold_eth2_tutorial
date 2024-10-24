@@ -2,6 +2,9 @@
 
 ![alt text](https://github.com/RosarioB/scaffold_eth2_tutorial/blob/main/github_images/scaffold_eth2_tutorial.gif?raw=true)
 
+This is the source code of this [Medium article](https://medium.com/@borgesiros/step-by-step-guide-how-to-build-your-first-dapp-with-scaffold-eth-2-cc74927fd498) and of this [Youtube video](https://www.youtube.com/watch?v=354L6OZVwjA&t=2152s)
+
+
 # 🏗 Scaffold-ETH 2
 
 <h4 align="center">
